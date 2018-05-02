@@ -65,7 +65,7 @@ class MapVirusesWorkflow(sl.WorkflowTask):
         tasks_map_viruses = {}
 
         # Iterate over all of the rows of samples
-        for ix, r in metadata.head().iterrows():
+        for ix, r in metadata.iterrows():
 
             # Get the sample name and the file location
             sample_name = r[self.sample_column_name]
