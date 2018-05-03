@@ -17,7 +17,6 @@ class MapVirusesWorkflow(sl.WorkflowTask):
 
     ref_db_metadata = sl.Parameter()
     ref_db_dmnd = sl.Parameter()
-    batch_queue = sl.Parameter(default="optimal")
     metadata_fp = sl.Parameter()
     base_s3_folder = sl.Parameter()
     sample_column_name = sl.Parameter()
@@ -153,12 +152,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ref-db-dmnd",
         help="Location of viral database DMND file",
-        required=True
-    )
-
-    parser.add_argument(
-        "--batch-queue",
-        help="Queue to use in AWS Batch",
         required=True
     )
 
