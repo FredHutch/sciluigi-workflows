@@ -13,7 +13,7 @@ class ImportSRAFastq(sl.ContainerTask):
     scratch_directory = sl.Parameter(default="/scratch")
 
     # URL of the container
-    container = "quay.io/fhcrc-microbiome/get_sra:v0.2"
+    container = "quay.io/fhcrc-microbiome/get_sra:v0.3"
 
     def out_fastq(self):
         # Output is an S3 object
