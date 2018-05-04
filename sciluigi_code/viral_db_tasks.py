@@ -22,7 +22,7 @@ class MapVirusesTask(sl.ContainerTask):
     temp_folder = sl.Parameter()
 
     # URL of the container
-    container = "quay.io/fhcrc-microbiome/map_viruses:v0.4"
+    container = "quay.io/fhcrc-microbiome/map_viruses:v0.5"
 
     def out_json(self):
         # Output is an S3 object
