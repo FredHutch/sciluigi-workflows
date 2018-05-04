@@ -22,7 +22,7 @@ class MapVirusesTask(sl.ContainerTask):
     temp_folder = sl.Parameter()
 
     # URL of the container
-    container = "quay.io/fhcrc-microbiome/map_viruses:v0.5"
+    container = "quay.io/fhcrc-microbiome/map_viruses:v0.6"
 
     def out_json(self):
         # Output is an S3 object
@@ -32,6 +32,17 @@ class MapVirusesTask(sl.ContainerTask):
                 self.base_s3_folder,
                 "map_viruses",
                 self.sample_name + ".json.gz"
+            )
+        )
+
+    def out_sam(self):
+        # Output is an S3 object
+        return sl.ContainerTargetInfo(
+            self,
+            os.path.join(
+                self.base_s3_folder,
+                "map_viruses",
+                self.sample_name + ".sam.gz"
             )
         )
 
@@ -51,6 +62,7 @@ class MapVirusesTask(sl.ContainerTask):
                 "--threads",
                 str(self.threads),
                 "--temp-folder",
-                self.temp_folder
+                self.temp_folder,
+                "--keep-alignments",
             ])
         )
