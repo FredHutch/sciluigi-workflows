@@ -32,6 +32,9 @@ class AssembleMetaSPAdes(sl.ContainerTask):
 
     def run(self):
 
+        if self.output_folder.endswith("/") is False:
+            self.output_folder = self.output_folder + "/"
+
         self.ex(
             command=" ".join([
                 "run_metaspades.py",
@@ -78,6 +81,9 @@ class AnnotateProkka(sl.ContainerTask):
         )
 
     def run(self):
+
+        if self.output_folder.endswith("/") is False:
+            self.output_folder = self.output_folder + "/"
 
         self.ex(
             command=" ".join([
