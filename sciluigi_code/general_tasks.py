@@ -8,6 +8,44 @@ class LoadFile(sl.ExternalTask):
         return sl.ContainerTargetInfo(self, self.path)
 
 
+class FastqpTask(sl.ContainerTask):
+
+    # Input: FASTQ
+    in_fastq = None
+
+    # Output is a summary of the FASTQ quality
+    summary_path = sl.Parameter()
+
+    input_mount_point = sl.Parameter(default="/mnt/input/")
+    output_mount_point = sl.Parameter(default="/mnt/output/")
+
+    # URL of the container
+    container = "quay.io/fhcrc-microbiome/fastqp:fastqp-v0.2"
+
+    def out_summary(self):
+        return sl.ContainerTargetInfo(self, self.summary_path)
+
+    def run(self):
+
+        input_targets = {
+            "fastq": self.in_fastq()
+        }
+
+        output_targets = {
+            "summary_file": self.out_summary()
+        }
+
+        self.ex(
+            command="fastqp " +
+                    "-e $summary_file " + 
+                    "$fastq",
+            input_targets=input_targets,
+            output_targets=output_targets,
+            input_mount_point=self.input_mount_point,
+            output_mount_point=self.output_mount_point,
+        )
+
+
 class AlignFastqTask(sl.ContainerTask):
 
     # Inputs: FASTQ and reference database
@@ -26,7 +64,7 @@ class AlignFastqTask(sl.ContainerTask):
     # Parameter: Number of threads for alignment
     threads = sl.Parameter()
 
-    # Parameter: Temporary folder to use on the devide
+    # Parameter: Temporary folder to use on the device
     temp_folder = sl.Parameter()
 
     # URL of the container
