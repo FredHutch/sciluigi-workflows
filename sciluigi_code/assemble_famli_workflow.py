@@ -83,7 +83,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                 output_mount_point="/scratch/{}_fastqp/output/".format(task_uuid),
                 containerinfo=sl.ContainerInfo(
                     vcpu=1,
-                    mem=10000,
+                    mem=32000,
                     engine=self.engine,
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                     aws_jobRoleArn=self.aws_job_role_arn,
