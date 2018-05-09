@@ -107,7 +107,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                     "metaspades"
                 ),
                 threads=self.assemble_threads,
-                max_mem=int(int(self.assemble_mem)/10),
+                max_mem=int(int(self.assemble_mem)/1000),
                 temp_folder=self.temp_folder,
                 containerinfo=sl.ContainerInfo(
                     vcpu=int(self.assemble_threads),
