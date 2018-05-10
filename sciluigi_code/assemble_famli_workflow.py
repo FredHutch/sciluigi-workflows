@@ -255,7 +255,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                 )
             )
             # Connect the raw FASTQ input
-            tasks_famli[sample_name].in_fastq = tasks_load_inputs[sample_name]
+            tasks_famli[sample_name].in_fastq = tasks_load_inputs[sample_name].out_file
             # Connect the reference database
             tasks_famli[sample_name].in_ref_dmnd = task_integrate_assemblies.out_daa
 
