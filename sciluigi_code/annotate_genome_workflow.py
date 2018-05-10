@@ -46,6 +46,7 @@ class AnnotateGenomeWorkflow(sl.WorkflowTask):
                 aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                 aws_jobRoleArn=self.aws_job_role_arn,
                 aws_batch_job_queue=self.aws_batch_job_queue,
+                aws_batch_job_name="annotate_prokka_{}".format(self.genome_name),
                 mounts={
                     "/docker_scratch": {
                         "bind": self.temp_folder,
@@ -73,6 +74,7 @@ class AnnotateGenomeWorkflow(sl.WorkflowTask):
                 aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                 aws_jobRoleArn=self.aws_job_role_arn,
                 aws_batch_job_queue=self.aws_batch_job_queue,
+                aws_batch_job_name="checkm_{}".format(self.genome_name),
                 mounts={
                     "/docker_scratch": {
                         "bind": self.temp_folder,
