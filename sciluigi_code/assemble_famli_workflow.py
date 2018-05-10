@@ -39,7 +39,10 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
     def workflow(self):
 
         # Make sure the project name is alphanumeric
-        assert all([s.isalnum() for s in self.project_name]), "Project name must be alphanumeric"
+        assert all([
+            s.isalnum() or s == "_"
+            for s in self.project_name
+        ]), "Project name must be alphanumeric"
 
         # Read in the metadata sheet
         metadata = pd.read_table(self.metadata_fp, sep=self.metadata_fp_sep)
