@@ -1,4 +1,5 @@
 import os
+import uuid
 import sciluigi as sl
 
 
@@ -77,6 +78,16 @@ class AnnotateProkka(sl.ContainerTask):
             os.path.join(
                 self.output_folder,
                 self.sample_name + ".gff.gz"
+            )
+        )
+
+    def out_faa(self):
+        # Output is an S3 object
+        return sl.ContainerTargetInfo(
+            self,
+            os.path.join(
+                self.output_folder,
+                self.sample_name + ".fastp.gz"
             )
         )
 
