@@ -129,13 +129,13 @@ class CheckM(sl.ContainerTask):
     # URL of the container
     container = "quay.io/fhcrc-microbiome/checkm:checkm-v1.0.11"
 
-    def out_tarball(self):
+    def out_tsv(self):
         # Output is a tarball with all of the results
         return sl.ContainerTargetInfo(
             self,
             os.path.join(
                 self.output_folder,
-                self.sample_name + ".tar.gz"
+                self.sample_name + ".checkm.tsv"
             )
         )
 
@@ -149,7 +149,7 @@ class CheckM(sl.ContainerTask):
         }
 
         output_targets = {
-            "tarball": self.out_tarball()
+            "tsv": self.out_tsv()
         }
 
         temp_dir = os.path.join(self.temp_folder, str(uuid.uuid4())[:8])
@@ -169,17 +169,12 @@ class CheckM(sl.ContainerTask):
                     "gunzip {}/checkm_input/* && ".format(temp_dir) +
                     "ls -lhtr {}/checkm_input/ && ".format(temp_dir) +
                     "echo Running checkm && " +
-                    "checkm lineage_wf --genes -x fastp -t {} {}/checkm_input/ {}/checkm_output/ && ".format(
-                        self.threads, temp_dir, temp_dir
+                    "checkm lineage_wf --genes -x fastp -t {} --file {}/checkm.tsv {}/checkm_input/ {}/checkm_output/ && ".format(
+                        self.threads, temp_dir, temp_dir, temp_dir
                     ) + 
                     "echo Finished running checkm && " +
-                    "ls -lhtr {}/checkm_output/ && ".format(temp_dir) +
-                    "echo Collecting results && " +
-                    "tar cvf {}/output.tar {}/checkm_output && ".format(temp_dir, temp_dir) +
-                    "echo Compressing results && " +
-                    "gzip {}/output.tar && ".format(temp_dir) +
                     "echo Copying results out of the container && " +
-                    "mv {}/output.tar.gz ".format(temp_dir) + "$tarball && " +
+                    "mv {}/checkm.tsv ".format(temp_dir) + "$tsv && " +
                     "echo Deleting temporary folders && " +
                     "rm -r {}".format(temp_dir),
             input_targets=input_targets,
