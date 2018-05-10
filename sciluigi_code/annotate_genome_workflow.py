@@ -13,6 +13,8 @@ class AnnotateGenomeWorkflow(sl.WorkflowTask):
 
     genome_fasta = sl.Parameter()
     genome_name = sl.Parameter()
+    checkm_memory = sl.Parameter(default=64000)
+    checkm_threads = sl.Parameter(default=8)
     base_s3_folder = sl.Parameter()
     aws_job_role_arn = sl.Parameter()
     aws_s3_scratch_loc = sl.Parameter()
@@ -35,11 +37,11 @@ class AnnotateGenomeWorkflow(sl.WorkflowTask):
             AnnotateProkka,
             sample_name=self.genome_name,
             output_folder=os.path.join(self.base_s3_folder, "prokka"),
-            threads=1,
+            threads=self.checkm_threads,
             temp_folder=self.temp_folder,
             containerinfo=sl.ContainerInfo(
-                vcpu=1,
-                mem=4096,
+                vcpu=int(self.checkm_threads),
+                mem=int(self.checkm_memory),
                 engine=self.engine,
                 aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                 aws_jobRoleArn=self.aws_job_role_arn,
@@ -66,7 +68,7 @@ class AnnotateGenomeWorkflow(sl.WorkflowTask):
             temp_folder=self.temp_folder,
             containerinfo=sl.ContainerInfo(
                 vcpu=int(8),
-                mem=int(64),
+                mem=int(64000),
                 engine=self.engine,
                 aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                 aws_jobRoleArn=self.aws_job_role_arn,

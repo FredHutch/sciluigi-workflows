@@ -155,8 +155,8 @@ class CheckM(sl.ContainerTask):
         temp_dir = os.path.join(self.temp_folder, str(uuid.uuid4())[:8])
 
         self.ex(
-            command="echo Checking to see if temp directory ({}) exists && ".format(temp_dir) +
-                    "[[ ! -d {} ]] && ".format(temp_dir) +
+            command="echo 'Checking to see if temp directory ({}) exists' && ".format(temp_dir) +
+                    "[ ! -d '{}' ] && ".format(temp_dir) +
                     "echo Making temp directory {} && ".format(temp_dir) +
                     "mkdir {} && ".format(temp_dir) +
                     "echo Making temp directory for input files {}/checkm_input && ".format(temp_dir) +
@@ -167,9 +167,10 @@ class CheckM(sl.ContainerTask):
                     "mv $faa " + "{}/checkm_input/ && ".format(temp_dir) +
                     "echo Decompressing input file && " +
                     "gunzip {}/checkm_input/* && ".format(temp_dir) +
+                    "ls -lhtr {}/checkm_input/ && ".format(temp_dir) +
                     "echo Running checkm && " +
-                    "checkm lineage_wf --genes -x faa {}/checkm_input/ {}/checkm_output/ && ".format(
-                        temp_dir, temp_dir
+                    "checkm lineage_wf --genes -x fastp -t {} {}/checkm_input/ {}/checkm_output/ && ".format(
+                        self.threads, temp_dir, temp_dir
                     ) + 
                     "echo Finished running checkm && " +
                     "ls -lhtr {}/checkm_output/ && ".format(temp_dir) +
@@ -178,7 +179,9 @@ class CheckM(sl.ContainerTask):
                     "echo Compressing results && " +
                     "gzip {}/output.tar && ".format(temp_dir) +
                     "echo Copying results out of the container && " +
-                    "mv {}/output.tar.gz ".format(temp_dir) + "$tarball",
+                    "mv {}/output.tar.gz ".format(temp_dir) + "$tarball && " +
+                    "echo Deleting temporary folders && " +
+                    "rm -r {}".format(temp_dir),
             input_targets=input_targets,
             output_targets=output_targets
             )
