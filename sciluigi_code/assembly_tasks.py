@@ -208,7 +208,7 @@ class IntegrateAssembliesTask(sl.ContainerTask):
             self,
             os.path.join(
                 self.output_folder,
-                self.output_name + ".dmnd"
+                self.output_prefix + ".dmnd"
             )
         )
 
