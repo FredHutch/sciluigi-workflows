@@ -259,7 +259,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
             # Connect the reference database
             tasks_famli[sample_name].in_ref_dmnd = task_integrate_assemblies.out_daa
 
-        return tasks_fastqp, tasks_prokka, tasks_metaspades, task_integrate_assemblies, tasks_famli
+        return tasks_famli, tasks_fastqp
 
 
 if __name__ == "__main__":
