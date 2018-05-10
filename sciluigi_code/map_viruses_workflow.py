@@ -132,7 +132,7 @@ class MapVirusesWorkflow(sl.WorkflowTask):
             # Assign the input for the reference database
             tasks_map_viruses[sample_name].in_ref_db_dmnd = ref_db_dmnd.out_file
             tasks_map_viruses[sample_name].in_ref_db_metadata = ref_db_metadata.out_file
-            tasks_map_viruses[sample_name].in_fastq = tasks_load_inputs[sample_name].out_fastq
+            tasks_map_viruses[sample_name].in_fastq = tasks_load_inputs[sample_name].out_file
 
         return tasks_map_viruses
 
