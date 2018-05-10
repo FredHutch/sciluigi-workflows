@@ -181,3 +181,69 @@ class CheckM(sl.ContainerTask):
             output_targets=output_targets
             )
 
+
+class IntegrateAssembliesTask(sl.ContainerTask):
+    # Input FASTP files
+    in_fastp_list = None
+    # Input GFF files
+    in_gff_list = None
+
+    # Folder with GFF files
+    gff_folder = sl.Parameter()
+    # Folder with FASTP files
+    fastp_folder = sl.Parameter()
+    # Output prefix
+    output_prefix = sl.Parameter()
+    # Output folder
+    output_folder = sl.Parameter()
+    # Scratch directory
+    temp_folder = sl.Parameter(default="/scratch")
+
+    # URL of the container
+    container = "quay.io/fhcrc-microbiome/integrate-metagenomic-assemblies:v0.3"
+
+    def out_daa(self):
+        # DIAMOND database
+        return sl.ContainerTargetInfo(
+            self,
+            os.path.join(
+                self.output_folder,
+                self.output_name + ".dmnd"
+            )
+        )
+
+    def out_json(self):
+        # JSON summary of all data
+        return sl.ContainerTargetInfo(
+            self,
+            os.path.join(
+                self.output_folder,
+                self.output_prefix + ".json.gz"
+            )
+        )
+
+    def run(self):
+
+        if self.output_folder.endswith("/") is False:
+            self.output_folder = self.output_folder + "/"
+
+        for fastp in self.in_fastp_list:
+            assert fastp().exists
+        for gff in self.in_gff_list:
+            assert gff().exists
+
+        self.ex(
+            command=" ".join([
+                "integrate_assemblies.py",
+                "--gff-folder",
+                self.gff_folder,
+                "--prot-folder",
+                self.fastp_folder,
+                "--output-name",
+                self.output_prefix,
+                "--output-folder",
+                self.output_folder,
+                "--temp-folder",
+                self.temp_folder
+            ])
+        )

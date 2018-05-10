@@ -103,3 +103,60 @@ class AlignFastqTask(sl.ContainerTask):
                 self.temp_folder
             ])
         )
+
+
+class FAMLITask(sl.ContainerTask):
+
+    # Inputs: FASTQ and reference database
+    in_fastq = None
+    in_ref_dmnd = None
+
+    # Parameter: Prefix for output file
+    sample_name = sl.Parameter()
+
+    # Parameter: Output folder
+    output_folder = sl.Parameter()
+
+    # Parameter: Number of threads for alignment
+    threads = sl.Parameter()
+
+    # Parameter: Number of blocks for alignment (each block takes ~6Gb)
+    blocks = sl.Parameter(default=5)
+
+    # Parameter: Temporary folder to use on the device
+    temp_folder = sl.Parameter()
+
+    # URL of the container
+    container = "quay.io/fhcrc-microbiome/famli:v1.0"
+
+    def out_json(self):
+        # Output is an S3 object
+        return sl.ContainerTargetInfo(
+            self,
+            os.path.join(
+                self.output_folder,
+                "{}.json.gz".format(self.sample_name)
+            )
+        )
+
+    def run(self):
+
+        self.ex(
+            command=" ".join([
+                "famli",
+                "--input",
+                self.in_fastq().path,
+                "--sample-name",
+                self.sample_name,
+                "--ref-db",
+                self.in_ref_dmnd().path,
+                "--output-folder",
+                self.output_folder,
+                "--threads",
+                str(self.threads),
+                "--blocks",
+                str(self.blocks),
+                "--temp-folder",
+                self.temp_folder
+            ])
+        )

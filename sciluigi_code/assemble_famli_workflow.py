@@ -8,12 +8,15 @@ import pandas as pd
 import sciluigi as sl
 from general_tasks import LoadFile
 from general_tasks import FastqpTask
+from general_tasks import FAMLITask
 from assembly_tasks import AssembleMetaSPAdes
 from assembly_tasks import AnnotateProkka
+from assembly_tasks import IntegrateAssembliesTask
 
 
 class AssembleFamliWorkflow(sl.WorkflowTask):
 
+    project_name = sl.Parameter()
     metadata_fp = sl.Parameter()
     base_s3_folder = sl.Parameter()
     sample_column_name = sl.Parameter()
@@ -35,6 +38,9 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
 
     def workflow(self):
 
+        # Make sure the project name is alphanumeric
+        assert all([s.isalnum() for s in self.project_name]), "Project name must be alphanumeric"
+
         # Read in the metadata sheet
         metadata = pd.read_table(self.metadata_fp, sep=self.metadata_fp_sep)
 
@@ -53,7 +59,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
         tasks_famli = {}
 
         # Iterate over all of the rows of samples
-        for ix, r in metadata.iterrows():
+        for _, r in metadata.iterrows():
 
             # Get the sample name and the file location
             sample_name = r[self.sample_column_name]
@@ -155,9 +161,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                 )
             )
 
-            # 5. COMBINE ASSEMBLIES
 
-            # 6. ALIGN AGAINST THE ASSEMBLY USING FAMLI
 
         # Assign the output from tasks_load_inputs to the input to tasks_fastqp
         for sample_name in tasks_load_inputs:
@@ -170,7 +174,89 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
             assert sample_name in tasks_prokka
             tasks_prokka[sample_name].in_fasta = tasks_metaspades[sample_name].out_fasta
 
-        return tasks_fastqp, tasks_prokka
+        # 5. COMBINE ASSEMBLIES
+        task_integrate_assemblies = self.new_task(
+            "integrate_assemblies-{}".format(self.project_name),
+            IntegrateAssembliesTask,
+            output_prefix=self.project_name,
+            output_folder=os.path.join(
+                self.base_s3_folder,
+                "integrated_assembly"
+            ),
+            gff_folder=os.path.join(
+                self.base_s3_folder,
+                "prokka"
+            ),
+            fastp_folder=os.path.join(
+                self.base_s3_folder,
+                "prokka"
+            ),
+            temp_folder=self.temp_folder,
+            containerinfo=sl.ContainerInfo(
+                vcpu=1,
+                mem=30000,
+                engine=self.engine,
+                aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                aws_jobRoleArn=self.aws_job_role_arn,
+                aws_batch_job_queue=self.aws_batch_job_queue,
+                aws_batch_job_prefix="integrate_assemblies_{}".format(self.project_name),
+                mounts={
+                    "/docker_scratch": {
+                        "bind": self.temp_folder,
+                        "mode": "rw"
+                    }
+                }
+            )
+        )
+
+        task_integrate_assemblies.in_fastp_list = [
+            t.out_faa for t in tasks_prokka.values()
+        ]
+        task_integrate_assemblies.in_gff_list = [
+            t.out_gff for t in tasks_prokka.values()
+        ]
+
+        # 6. ALIGN AGAINST THE ASSEMBLY USING FAMLI
+        tasks_famli = {}
+        # Iterate over all of the rows of samples
+        for _, r in metadata.iterrows():
+
+            # Get the sample name and the file location
+            sample_name = r[self.sample_column_name]
+            input_path = r[self.input_column_name]
+
+            tasks_famli[sample_name] = self.new_task(
+                "famli_{}".format(sample_name),
+                FAMLITask,
+                sample_name=sample_name,
+                output_folder=os.path.join(
+                    self.base_s3_folder,
+                    "famli"
+                ),
+                threads=self.famli_threads,
+                temp_folder=self.temp_folder,
+                containerinfo=sl.ContainerInfo(
+                    vcpu=int(self.famli_threads),
+                    mem=int(self.famli_mem),
+                    engine=self.engine,
+                    aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                    aws_jobRoleArn=self.aws_job_role_arn,
+                    aws_batch_job_queue=self.aws_batch_job_queue,
+                    aws_batch_job_prefix="prokka_{}".format(sample_name),
+                    mounts={
+                        "/docker_scratch": {
+                            "bind": self.temp_folder,
+                            "mode": "rw"
+                        }
+                    }
+                )
+            )
+            # Connect the raw FASTQ input
+            tasks_famli[sample_name].in_fastq = tasks_load_inputs[sample_name]
+            # Connect the reference database
+            tasks_famli[sample_name].in_ref_dmnd = task_integrate_assemblies.out_daa
+
+        return tasks_fastqp, tasks_prokka, tasks_metaspades, task_integrate_assemblies, tasks_famli
 
 
 if __name__ == "__main__":
@@ -178,6 +264,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="""
         Assemble a set of FASTQ files, combine the assemblies, and align with FAMLI.""")
+
+    parser.add_argument(
+        "--project-name",
+        help="Name for entire project (alphanumeric only)",
+        required=True
+    )
 
     parser.add_argument(
         "--metadata-fp",
