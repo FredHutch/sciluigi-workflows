@@ -82,6 +82,8 @@ class HUMAnN2Workflow(sl.WorkflowTask):
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
+                    aws_batch_job_prefix="fastqp_{}".format(
+                        sample_name),
                     mounts={
                         "/docker_scratch": {
                             "bind": self.temp_folder,
@@ -110,6 +112,8 @@ class HUMAnN2Workflow(sl.WorkflowTask):
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
+                    aws_batch_job_prefix="humann2_{}".format(
+                        sample_name),
                     mounts={
                         "/docker_scratch": {
                             "bind": self.temp_folder,
