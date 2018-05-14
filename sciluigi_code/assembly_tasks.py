@@ -19,7 +19,7 @@ class AssembleMetaSPAdes(sl.ContainerTask):
     temp_folder = sl.Parameter(default="/scratch")
 
     # URL of the container
-    container = "quay.io/fhcrc-microbiome/metaspades:v3.11.1--7"
+    container = "quay.io/fhcrc-microbiome/metaspades:v3.11.1--8"
 
     def out_fasta(self):
         # Output is an S3 object
@@ -69,7 +69,7 @@ class AnnotateProkka(sl.ContainerTask):
     temp_folder = sl.Parameter(default="/scratch")
 
     # URL of the container
-    container = "quay.io/fhcrc-microbiome/metaspades:v3.11.1--7"
+    container = "quay.io/fhcrc-microbiome/metaspades:v3.11.1--8"
 
     def out_gff(self):
         # Output is an S3 object
