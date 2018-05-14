@@ -66,3 +66,53 @@ class MapVirusesTask(sl.ContainerTask):
                 "--keep-alignments",
             ])
         )
+
+
+class VirFinderTask(sl.ContainerTask):
+    """Run the VirFinder tool on a set of contigs."""
+
+    # Inputs: FASTA
+    in_fasta = None
+
+    # Parameter: AWS S3 folder for this project
+    base_s3_folder = sl.Parameter()
+
+    # Parameter: Name for output file(s)
+    sample_name = sl.Parameter()
+
+    # Use this to specify a different mount point for temporary files, if needed
+    input_mount_point = sl.Parameter(default="/mnt/input/")
+    output_mount_point = sl.Parameter(default="/mnt/output/")
+
+    # URL of the container
+    container = "quay.io/fhcrc-microbiome/virfinder:v1.1--0"
+
+    def out_tsv(self):
+        # Output is an S3 object
+        return sl.ContainerTargetInfo(
+            self,
+            os.path.join(
+                self.base_s3_folder,
+                "virfinder",
+                self.sample_name + ".tsv"
+            )
+        )
+
+
+    def run(self):
+
+        input_targets={
+            "input_fasta": self.in_fasta()
+        }
+
+        output_targets={
+            "output_tsv": self.out_tsv()
+        }
+
+        self.ex(
+            command="run_virfinder.Rscript $input_fasta $output_tsv",
+            input_targets= input_targets,
+            output_targets= output_targets,
+            input_mount_point= self.input_mount_point,
+            output_mount_point= self.output_mount_point,
+        )

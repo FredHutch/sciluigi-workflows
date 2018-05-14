@@ -7,6 +7,8 @@ import pandas as pd
 import sciluigi as sl
 from general_tasks import LoadFile
 from viral_db_tasks import MapVirusesTask
+from viral_db_tasks import VirFinderTask
+from assembly_tasks import AssembleMetaSPAdes
 from sra_tasks import ImportSRAFastq
 
 
@@ -25,6 +27,8 @@ class MapVirusesWorkflow(sl.WorkflowTask):
     input_location = sl.Parameter()
     align_threads = sl.Parameter(default=4)
     align_mem = sl.Parameter(default=10000)
+    assemble_threads = sl.Parameter(default=16)
+    assemble_mem = sl.Parameter(default=60000)
     aws_job_role_arn = sl.Parameter()
     aws_s3_scratch_loc = sl.Parameter()
     aws_batch_job_queue = sl.Parameter(default="optimal")
@@ -62,6 +66,12 @@ class MapVirusesWorkflow(sl.WorkflowTask):
 
         # Keep track of all of the jobs for aligning against the viral database
         tasks_map_viruses = {}
+
+        # Assembling datasets de novo
+        tasks_metaspades = {}
+
+        # Running VirFinder on assembled contigs
+        tasks_virfinder = {}
 
         # Iterate over all of the rows of samples
         for ix, r in metadata.iterrows():
@@ -127,6 +137,53 @@ class MapVirusesWorkflow(sl.WorkflowTask):
                     }
                 )
             )
+
+            # De novo assembly with metaSPAdes
+            tasks_metaspades[sample_name] = self.new_task(
+                "metaspades_{}".format(sample_name),
+                AssembleMetaSPAdes,
+                sample_name=sample_name,
+                output_folder=os.path.join(
+                    self.base_s3_folder,
+                    "metaspades"
+                ),
+                threads=self.assemble_threads,
+                max_mem=int(int(self.assemble_mem)/1000),
+                temp_folder=self.temp_folder,
+                containerinfo=sl.ContainerInfo(
+                    vcpu=int(self.assemble_threads),
+                    mem=int(self.assemble_mem),
+                    engine=self.engine,
+                    aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                    aws_jobRoleArn=self.aws_job_role_arn,
+                    aws_batch_job_queue=self.aws_batch_job_queue,
+                    aws_batch_job_prefix="metaspades_{}".format(sample_name),
+                    mounts={
+                        "/docker_scratch": {
+                            "bind": self.temp_folder,
+                            "mode": "rw"
+                        }
+                    }
+                )
+            )
+
+            # Run VirFinder on the assembled contigs
+            tasks_virfinder[sample_name] = self.new_task(
+                "virfinder_{}".format(sample_name),
+                VirFinderTask,
+                base_s3_folder=self.base_s3_folder,
+                sample_name=sample_name,
+                containerinfo=sl.ContainerInfo(
+                    vcpu=int(self.align_threads),
+                    mem=int(self.align_mem),
+                    engine=self.engine,
+                    aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                    aws_jobRoleArn=self.aws_job_role_arn,
+                    aws_batch_job_queue=self.aws_batch_job_queue,
+                    aws_batch_job_prefix="virfinder_{}".format(sample_name)
+                )
+            )
+
         # Assign the output from tasks_load_inputs to the input to tasks_map_viruses
         for sample_name in tasks_load_inputs:
             assert sample_name in tasks_map_viruses
@@ -136,7 +193,11 @@ class MapVirusesWorkflow(sl.WorkflowTask):
             tasks_map_viruses[sample_name].in_ref_db_metadata = ref_db_metadata.out_file
             tasks_map_viruses[sample_name].in_fastq = tasks_load_inputs[sample_name].out_file
 
-        return tasks_map_viruses
+            # VirFinder depends on metaspades
+            tasks_metaspades[sample_name].in_fastq = tasks_load_inputs[sample_name].out_file
+            tasks_virfinder[sample_name].in_fasta = tasks_metaspades[sample_name].out_fasta
+
+        return tasks_map_viruses, tasks_virfinder
 
 
 if __name__ == "__main__":
