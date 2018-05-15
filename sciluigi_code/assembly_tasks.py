@@ -227,11 +227,6 @@ class IntegrateAssembliesTask(sl.ContainerTask):
         if self.output_folder.endswith("/") is False:
             self.output_folder = self.output_folder + "/"
 
-        for fastp in self.in_fastp_list:
-            assert fastp().exists
-        for gff in self.in_gff_list:
-            assert gff().exists
-
         self.ex(
             command=" ".join([
                 "integrate_assemblies.py",
