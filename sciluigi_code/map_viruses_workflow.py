@@ -270,6 +270,20 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--assemble-threads",
+        type=int,
+        default=8,
+        help="Number of CPUs to use for assembly"
+    )
+
+    parser.add_argument(
+        "--assemble-mem",
+        type=int,
+        default=60000,
+        help="Memory to use for assembly (MBs)"
+    )
+
+    parser.add_argument(
         "--aws-job-role-arn",
         help="Job Role ARN to use with AWS Batch",
         type=str
