@@ -200,7 +200,7 @@ class IntegrateAssembliesTask(sl.ContainerTask):
     temp_folder = sl.Parameter(default="/scratch")
 
     # URL of the container
-    container = "quay.io/fhcrc-microbiome/integrate-metagenomic-assemblies:v0.3"
+    container = "quay.io/fhcrc-microbiome/integrate-metagenomic-assemblies:v0.4"
 
     def out_daa(self):
         # DIAMOND database
