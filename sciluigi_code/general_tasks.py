@@ -144,6 +144,7 @@ class FAMLITask(sl.ContainerTask):
         self.ex(
             command=" ".join([
                 "famli",
+                "align",
                 "--input",
                 self.in_fastq().path,
                 "--sample-name",
