@@ -127,7 +127,7 @@ class FAMLITask(sl.ContainerTask):
     temp_folder = sl.Parameter()
 
     # URL of the container
-    container = "quay.io/fhcrc-microbiome/famli:v1.0"
+    container = "quay.io/fhcrc-microbiome/famli:v1.1"
 
     def out_json(self):
         # Output is an S3 object
