@@ -97,7 +97,10 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
-                    aws_batch_job_prefix="fastqp_{}".format(sample_name),
+                    aws_batch_job_prefix=re.sub(
+                        '[^a-zA-Z0-9-_]', '_',
+                        "fastqp_{}".format(sample_name)
+                    ),
                     mounts={
                         "/docker_scratch": {
                             "bind": self.temp_folder,
@@ -126,7 +129,10 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
-                    aws_batch_job_prefix="metaspades_{}".format(sample_name),
+                    aws_batch_job_prefix=re.sub(
+                        '[^a-zA-Z0-9-_]', '_',
+                        "metaspades_{}".format(sample_name)
+                    ),
                     mounts={
                         "/docker_scratch": {
                             "bind": self.temp_folder,
@@ -154,7 +160,10 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
-                    aws_batch_job_prefix="prokka_{}".format(sample_name),
+                    aws_batch_job_prefix=re.sub(
+                        '[^a-zA-Z0-9-_]', '_',
+                        "prokka_{}".format(sample_name)
+                    ),
                     mounts={
                         "/docker_scratch": {
                             "bind": self.temp_folder,
