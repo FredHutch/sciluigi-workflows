@@ -9,8 +9,8 @@ class MapVirusesTask(sl.ContainerTask):
     in_ref_db_metadata = None
     in_ref_db_dmnd = None
 
-    # Parameter: AWS S3 folder for this project
-    base_s3_folder = sl.Parameter()
+    # Parameter: AWS S3 folder for output files
+    output_folder = sl.Parameter()
 
     # Parameter: Name for output file(s)
     sample_name = sl.Parameter()
@@ -29,8 +29,7 @@ class MapVirusesTask(sl.ContainerTask):
         return sl.ContainerTargetInfo(
             self,
             os.path.join(
-                self.base_s3_folder,
-                "map_viruses",
+                self.output_folder,
                 self.sample_name + ".json.gz"
             )
         )
@@ -40,8 +39,7 @@ class MapVirusesTask(sl.ContainerTask):
         return sl.ContainerTargetInfo(
             self,
             os.path.join(
-                self.base_s3_folder,
-                "map_viruses",
+                self.output_folder,
                 self.sample_name + ".sam.gz"
             )
         )

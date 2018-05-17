@@ -2,6 +2,7 @@
 """Map a set of samples against a viral reference database."""
 
 import os
+import re
 import argparse
 import pandas as pd
 import sciluigi as sl
@@ -21,6 +22,7 @@ class MapVirusesWorkflow(sl.WorkflowTask):
     ref_db_dmnd = sl.Parameter()
     metadata_fp = sl.Parameter()
     base_s3_folder = sl.Parameter()
+    mapping_output_folder = sl.Parameter(default="map_viruses")
     sample_column_name = sl.Parameter()
     metadata_fp_sep = sl.Parameter(default=",")
     input_column_name = sl.Parameter()
@@ -95,7 +97,10 @@ class MapVirusesWorkflow(sl.WorkflowTask):
                         aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                         aws_jobRoleArn=self.aws_job_role_arn,
                         aws_batch_job_queue=self.aws_batch_job_queue,
-                        aws_batch_job_prefix="download_from_sra_{}".format(sample_name),
+                        aws_batch_job_prefix=re.sub(
+                            '[^a-zA-Z0-9-_]', '_',
+                            "download_from_sra_{}".format(sample_name)
+                        ),
                         mounts={
                             "/docker_scratch": {
                                 "bind": self.temp_folder,
@@ -117,7 +122,7 @@ class MapVirusesWorkflow(sl.WorkflowTask):
             tasks_map_viruses[sample_name] = self.new_task(
                 "map_viruses_{}".format(sample_name),
                 MapVirusesTask,
-                base_s3_folder=self.base_s3_folder,
+                output_folder=os.path.join(self.base_s3_folder, self.mapping_output_folder),
                 sample_name=sample_name,
                 threads=self.align_threads,
                 temp_folder=self.temp_folder,
@@ -128,7 +133,10 @@ class MapVirusesWorkflow(sl.WorkflowTask):
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
-                    aws_batch_job_prefix="map_viruses_{}".format(sample_name),
+                    aws_batch_job_prefix=re.sub(
+                        '[^a-zA-Z0-9-_]', '_',
+                        "map_viruses_{}".format(sample_name)
+                    ),
                     mounts={
                         "/docker_scratch": {
                             "bind": self.temp_folder,
@@ -157,7 +165,10 @@ class MapVirusesWorkflow(sl.WorkflowTask):
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
-                    aws_batch_job_prefix="metaspades_{}".format(sample_name),
+                    aws_batch_job_prefix=re.sub(
+                        '[^a-zA-Z0-9-_]', '_',
+                        "metaspades_{}".format(sample_name)
+                    ),
                     mounts={
                         "/docker_scratch": {
                             "bind": self.temp_folder,
@@ -180,7 +191,10 @@ class MapVirusesWorkflow(sl.WorkflowTask):
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
-                    aws_batch_job_prefix="virfinder_{}".format(sample_name)
+                    aws_batch_job_prefix=re.sub(
+                        '[^a-zA-Z0-9-_]', '_',
+                        "virfinder_{}".format(sample_name)
+                    ),
                 )
             )
 
@@ -228,6 +242,13 @@ if __name__ == "__main__":
         "--base-s3-folder",
         help="Folder to store data in S3",
         required=True
+    )
+
+    parser.add_argument(
+        "--mapping-output-folder",
+        help="Subfolder to place the results of map_virus within",
+        type=str,
+        default="map_viruses"
     )
 
     parser.add_argument(
