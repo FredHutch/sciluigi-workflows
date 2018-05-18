@@ -2,6 +2,7 @@
 """Assemble a set of FASTQ files, combine the assemblies, and align with FAMLI."""
 
 import os
+import re
 import uuid
 import argparse
 import pandas as pd

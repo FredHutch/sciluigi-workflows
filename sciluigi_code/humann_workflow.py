@@ -2,6 +2,7 @@
 """Analyze a set of FASTQ files with HUMAnN2."""
 
 import os
+import re
 import uuid
 import argparse
 import pandas as pd
