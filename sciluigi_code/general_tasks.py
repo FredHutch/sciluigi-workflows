@@ -141,6 +141,9 @@ class FAMLITask(sl.ContainerTask):
 
     def run(self):
 
+        if self.output_folder[-1] != '/':
+            self.output_folder += '/'
+
         self.ex(
             command=" ".join([
                 "famli",
