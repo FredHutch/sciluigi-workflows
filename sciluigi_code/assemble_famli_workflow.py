@@ -13,11 +13,13 @@ from general_tasks import FAMLITask
 from assembly_tasks import AssembleMetaSPAdes
 from assembly_tasks import AnnotateProkka
 from assembly_tasks import IntegrateAssembliesTask
+from sra_tasks import ImportSRAFastq
 
 
 class AssembleFamliWorkflow(sl.WorkflowTask):
 
     project_name = sl.Parameter()
+    input_location = sl.Parameter(default="S3")
     metadata_fp = sl.Parameter()
     base_s3_folder = sl.Parameter()
     sample_column_name = sl.Parameter()
@@ -44,6 +46,9 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
             s.isalnum() or s == "_"
             for s in self.project_name
         ]), "Project name must be alphanumeric"
+
+        # Data can come from either SRA or S3
+        assert self.input_location in ["SRA", "S3"]
 
         # Read in the metadata sheet
         metadata = pd.read_table(self.metadata_fp, sep=self.metadata_fp_sep)
@@ -74,11 +79,45 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
 
             # 1. LOAD THE INPUT FILES
             
-            tasks_load_inputs[sample_name] = self.new_task(
-                "load_from_s3_{}".format(sample_name),
-                LoadFile,
-                path=input_path
-            )
+            if self.input_location == "S3":
+                tasks_load_inputs[sample_name] = self.new_task(
+                    "load_from_s3_{}".format(sample_name),
+                    LoadFile,
+                    path=input_path
+                )
+            elif self.input_location == "SRA":
+                assert input_path.startswith("SRR"), input_path
+
+                tasks_load_inputs[sample_name] = self.new_task(
+                    "download_from_SRA_{}".format(sample_name),
+                    ImportSRAFastq,
+                    sra_accession=input_path,
+                    base_s3_folder=self.base_s3_folder,
+                    input_mount_point="/scratch/{}_get_sra/input/".format(
+                        task_uuid),
+                    output_mount_point="/scratch/{}_get_sra/output/".format(
+                        task_uuid),
+                    containerinfo=sl.ContainerInfo(
+                        vcpu=1,
+                        mem=32000,
+                        engine=self.engine,
+                        aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                        aws_jobRoleArn=self.aws_job_role_arn,
+                        aws_batch_job_queue=self.aws_batch_job_queue,
+                        aws_batch_job_prefix=re.sub(
+                            '[^a-zA-Z0-9-_]', '_',
+                            "get_sra_{}".format(sample_name)
+                        ),
+                        mounts={
+                            "/docker_scratch": {
+                                "bind": self.temp_folder,
+                                "mode": "rw"
+                            }
+                        }
+                    )
+                )
+            else:
+                raise Exception("Data must be from S3 or SRA")
             
             # 2. CALCULATE FASTQ QUALITY METRICS
             tasks_fastqp[sample_name] = self.new_task(
@@ -179,10 +218,17 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
         # Assign the output from tasks_load_inputs to the input to tasks_fastqp
         for sample_name in tasks_load_inputs:
             assert sample_name in tasks_fastqp
-            tasks_fastqp[sample_name].in_fastq = tasks_load_inputs[sample_name].out_file
+
+            if self.input_location == "S3":
+                tasks_fastqp[sample_name].in_fastq = tasks_load_inputs[sample_name].out_file
+            elif self.input_location == "SRA":
+                tasks_fastqp[sample_name].in_fastq = tasks_load_inputs[sample_name].out_fastq
 
             assert sample_name in tasks_metaspades
-            tasks_metaspades[sample_name].in_fastq = tasks_load_inputs[sample_name].out_file
+            if self.input_location == "S3":
+                tasks_metaspades[sample_name].in_fastq = tasks_load_inputs[sample_name].out_file
+            elif self.input_location == "SRA":
+                tasks_metaspades[sample_name].in_fastq = tasks_load_inputs[sample_name].out_fastq
 
             assert sample_name in tasks_prokka
             tasks_prokka[sample_name].in_fasta = tasks_metaspades[sample_name].out_fasta
@@ -265,7 +311,11 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                 )
             )
             # Connect the raw FASTQ input
-            tasks_famli[sample_name].in_fastq = tasks_load_inputs[sample_name].out_file
+            if self.input_location == "S3":
+                tasks_famli[sample_name].in_fastq = tasks_load_inputs[sample_name].out_file
+            elif self.input_location == "SRA":
+                tasks_famli[sample_name].in_fastq = tasks_load_inputs[sample_name].out_fastq
+
             # Connect the reference database
             tasks_famli[sample_name].in_ref_dmnd = task_integrate_assemblies.out_daa
 
@@ -294,6 +344,12 @@ if __name__ == "__main__":
         "--base-s3-folder",
         help = "Folder to store data in S3",
         required = True
+    )
+
+    parser.add_argument(
+        "--input-location",
+        help = "Location of input data (SRA or S3)",
+        default = "S3"
     )
 
     parser.add_argument(
