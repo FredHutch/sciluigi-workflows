@@ -102,6 +102,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                         mem=32000,
                         engine=self.engine,
                         aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                        aws_batch_job_poll_sec=120,
                         aws_jobRoleArn=self.aws_job_role_arn,
                         aws_batch_job_queue=self.aws_batch_job_queue,
                         aws_batch_job_prefix=re.sub(
@@ -135,6 +136,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                     mem=32000,
                     engine=self.engine,
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                    aws_batch_job_poll_sec=120,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
                     aws_batch_job_prefix=re.sub(
@@ -167,6 +169,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                     mem=int(self.assemble_mem),
                     engine=self.engine,
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                    aws_batch_job_poll_sec=120,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
                     aws_batch_job_prefix=re.sub(
@@ -198,6 +201,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                     mem=int(self.assemble_mem),
                     engine=self.engine,
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                    aws_batch_job_poll_sec=120,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
                     aws_batch_job_prefix=re.sub(
@@ -256,6 +260,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                 mem=120000,
                 engine=self.engine,
                 aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                aws_batch_job_poll_sec=120,
                 aws_jobRoleArn=self.aws_job_role_arn,
                 aws_batch_job_queue=self.aws_batch_job_queue,
                 aws_batch_job_prefix="integrate_assemblies_{}".format(self.project_name),
@@ -299,6 +304,7 @@ class AssembleFamliWorkflow(sl.WorkflowTask):
                     mem=int(self.famli_mem),
                     engine=self.engine,
                     aws_s3_scratch_loc=self.aws_s3_scratch_loc,
+                    aws_batch_job_poll_sec=120,
                     aws_jobRoleArn=self.aws_job_role_arn,
                     aws_batch_job_queue=self.aws_batch_job_queue,
                     aws_batch_job_prefix="famli_{}".format(sample_name),
